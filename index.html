@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Расписание ИС-25-4</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f5f7;--card:#fff;--text:#1b1d22;--muted:#6b7280;--accent:#3b6cf6;--accent-t:#fff;--line:#e5e7eb;--now:#16a34a;--bad:#dc2626}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--card:#1a1d24;--text:#eceef2;--muted:#9aa1ad;--accent:#6d93ff;--accent-t:#0f1115;--line:#2a2e38;--now:#4ade80;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#0f1115;--card:#1a1d24;--text:#eceef2;--muted:#9aa1ad;--accent:#6d93ff;--accent-t:#0f1115;--line:#2a2e38;--now:#4ade80;--bad:#f87171}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+main{max-width:520px;margin:0 auto;padding:16px}
+button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+button.pri{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+button.danger{color:var(--bad)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:14px}
+.acts{display:flex;gap:6px}.acts button{padding:6px 10px;min-width:38px}
+.hero{background:var(--accent);color:var(--accent-t);border-radius:18px;padding:18px;margin-bottom:16px}
+.hero .lbl{font-size:13px;opacity:.85}
+.hero .big{font-size:38px;font-weight:700;margin:4px 0 8px;font-variant-numeric:tabular-nums}
+.hero .what{font-size:15px;opacity:.95}
+.hero .nx{font-size:13px;opacity:.8;margin-top:6px}
+.bar{height:6px;border-radius:3px;background:rgba(255,255,255,.3);margin:6px 0 10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent-t);opacity:.9}
+.strip{display:flex;gap:6px;align-items:stretch;margin-bottom:12px}
+.strip .ar{padding:0 10px}
+.chip{flex:1;text-align:center;padding:6px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:12px;color:var(--muted);cursor:pointer;position:relative}
+.chip b{display:block;font-size:16px;color:var(--text)}
+.chip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-t)}
+.chip.sel b{color:var(--accent-t)}
+.chip.today b{text-decoration:underline}
+.chip.has::after{content:"";position:absolute;bottom:3px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:2px;background:currentColor;opacity:.6}
+.dh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.dh h2{font-size:14px;margin:0;color:var(--muted);font-weight:600}
+.dh button{font-size:13px;padding:4px 10px}
+.pair{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.pair.done{opacity:.5}
+.pair.now{border-color:var(--now);box-shadow:0 0 0 1px var(--now)}
+.pair.ed{border-style:dashed;cursor:pointer}
+.t{min-width:54px;font-weight:700;font-variant-numeric:tabular-nums}
+.t small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.i{flex:1}.n{font-weight:600}
+.m{color:var(--muted);font-size:14px;margin-top:2px}
+.room{align-self:center;background:var(--bg);border-radius:10px;padding:6px 10px;font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:24px 0}
+.add{width:100%;margin-bottom:8px;border-style:dashed}
+.foot{color:var(--muted);font-size:12px;margin-top:20px}
+#ov,#ov2{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+#ov[hidden],#ov2[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;max-height:92%;overflow:auto}
+.sheet h3{margin:0 0 10px;font-size:17px}
+.sheet label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}
+.sheet input,.sheet select,.sheet textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;font:16px system-ui,sans-serif;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+.sheet textarea{height:140px;font:12px monospace}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.row .sp{flex:1}
+body.w main>*:not(.hero){display:none}
+body.w .hero{margin:0;min-height:60vh;display:flex;flex-direction:column;justify-content:center;text-align:center}
+body.w .hero .big{font-size:clamp(48px,18vw,96px)}
+body.w .hero .what{font-size:18px}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div><h1>Группа ИС-25-4</h1><div class="sub">1 корпус · расписание пар</div></div>
+    <div class="acts">
+      <button id="bw" title="Режим виджета" aria-label="Режим виджета">▣</button>
+      <button id="bt" title="Тема" aria-label="Тема">◐</button>
+      <button id="bb" title="Данные" aria-label="Данные">⋯</button>
+    </div>
+  </header>
+  <section class="hero" id="hero" aria-live="polite">
+    <div class="lbl" id="lbl"></div>
+    <div class="big" id="big"></div>
+    <div class="bar" id="bar" hidden><i id="bi"></i></div>
+    <div class="what" id="what"></div>
+    <div class="nx" id="nx"></div>
+  </section>
+  <nav class="strip" id="strip"></nav>
+  <div class="dh"><h2 id="dt"></h2><div><button id="bto" hidden>К сегодня</button> <button id="be">Изменить</button></div></div>
+  <div id="list"></div>
+  <div class="foot">Длительность пары — 90 минут. Правки и актуальные данные сохраняются на этом устройстве. Дни «по основному расписанию» показывают только предметы — нажмите «Изменить», чтобы добавить аудиторию и преподавателя.</div>
+</main>
+
+<div id="ov" hidden><div class="sheet">
+  <h3 id="mt"></h3>
+  <label>Пара<select id="fn"></select></label>
+  <label>Предмет<input id="fs" list="subs" autocomplete="off"></label>
+  <label>Аудитория<input id="fr" autocomplete="off"></label>
+  <label>Преподаватель<input id="ft" list="tchs" autocomplete="off"></label>
+  <div class="row"><button id="bd" class="danger">Удалить</button><span class="sp"></span><button id="bc">Отмена</button><button id="bs" class="pri">Сохранить</button></div>
+</div></div>
+
+<div id="ov2" hidden><div class="sheet">
+  <h3>Данные</h3>
+  <label>Резервная копия правок (скопируйте текст или вставьте сюда копию с другого устройства)<textarea id="ta"></textarea></label>
+  <div class="row"><button id="bx" class="danger">Стереть правки</button><span class="sp"></span><button id="bc2">Закрыть</button><button id="bi2" class="pri">Применить</button></div>
+</div></div>
+<datalist id="subs"></datalist><datalist id="tchs"></datalist>
+
+<script>
+const DUR = 90;
+const ANCHOR = "2026-10-26"; // понедельник 1 недели (числитель)
+const TIMES = {1:"08:30",2:"10:35",3:"12:40",4:"14:30",5:"16:15",6:"18:00",7:"19:35"};
+const EVM="Элементы высшей математики", CM="Численные методы", FZK="ФЗК",
+  IYA="Иностранный язык в профессиональной деятельности", AAS="Архитектура аппаратных средств",
+  OS="Операционные системы и среды", IT="Информационные технологии",
+  DM="Дискретная математика с элементами математической логики", IST="История",
+  OAP="Основы алгоритмизации и программирования", ABP="Автоматизация бизнес-процессов";
+const SUBJECTS=[EVM,CM,FZK,IYA,AAS,OS,IT,DM,IST,OAP,ABP];
+const BASE = {
+  1: {1:[[2,AAS],[3,AAS],[4,IST]], 2:[[2,FZK],[3,OS]], 3:[[2,IYA],[3,IT],[4,DM]],
+      4:[[5,OAP],[6,ABP],[7,ABP]], 5:[[1,EVM],[2,CM],[3,OAP]], 6:[[3,IT],[4,OAP],[5,IST],[6,ABP]]},
+  2: {1:[[3,AAS],[4,IST],[5,DM]], 2:[[2,FZK],[3,OS]], 3:[[2,IYA],[3,IT],[4,DM]],
+      4:[[4,OS],[5,OAP],[6,ABP],[7,ABP]], 5:[[1,EVM],[2,CM],[3,EVM]], 6:[[4,OAP],[5,IST],[6,ABP]]}
+};
+const OVR = {
+  "2026-10-26": [
+    {n:2, subj:AAS, room:"ДО", teacher:"Черепанова Т. Д."},
+    {n:3, subj:AAS, room:"309", teacher:"Черепанова Т. Д."},
+    {n:4, subj:IST, room:"420", teacher:"Андронова А. В."}
+  ]
+};
+const DAYN=["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
+const SHORT=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const $=id=>document.getElementById(id);
+
+// ---- хранилище (только это устройство) ----
+const LS="isp4_v2";
+let store={ovr:{},theme:""};
+try{const s=JSON.parse(localStorage.getItem(LS)); if(s&&typeof s==="object"){store.ovr=s.ovr||{};store.theme=s.theme||"";}}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(store));}catch(e){}}
+
+// ---- даты ----
+function pad(x){return String(x).padStart(2,"0");}
+function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function at(k,hm){const [h,m]=hm.split(":").map(Number);const [y,mo,d]=k.split("-").map(Number);return new Date(y,mo-1,d,h,m,0);}
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+function monday(d){return addDays(d,-((d.getDay()+6)%7));}
+function weekOf(d){
+  const a=at(ANCHOR,"00:00"), dd=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const w=Math.floor(Math.round((dd-a)/864e5)/7);
+  return ((w%2)+2)%2===0?1:2;
+}
+function getOvr(k){return store.ovr[k]!==undefined?store.ovr[k]:OVR[k];}
+function pairsFor(d){
+  const k=ymd(d), o=getOvr(k);
+  if(o!==undefined) return {list:o,actual:true};
+  const wd=d.getDay();
+  const src=wd===0?[]:(BASE[weekOf(d)][wd]||[]);
+  return {list:src.map(x=>({n:x[0],subj:x[1]})),actual:false};
+}
+function dayList(d){
+  const k=ymd(d);
+  return pairsFor(d).list.slice().sort((a,b)=>a.n-b.n).map(p=>({...p,start:TIMES[p.n],s:at(k,TIMES[p.n])}));
+}
+function dur(ms){
+  let s=Math.max(0,Math.floor(ms/1000));
+  const d=Math.floor(s/86400); s%=86400;
+  const h=Math.floor(s/3600); s%=3600;
+  const m=Math.floor(s/60); s%=60;
+  if(d>0) return d+" д "+h+" ч "+pad(m)+" мин";
+  if(h>0) return h+" ч "+pad(m)+" мин";
+  return pad(m)+":"+pad(s);
+}
+function info(p){return p.subj+(p.room?" · ауд. "+p.room:"")+(p.teacher?" · "+p.teacher:"");}
+function dayPrefix(s,now){
+  const a=ymd(s), t=ymd(now);
+  if(a===t) return "";
+  if(a===ymd(addDays(now,1))) return "Завтра, ";
+  return DAYN[s.getDay()]+", "+s.getDate()+" "+MON[s.getMonth()]+", ";
+}
+
+// ---- состояние экрана ----
+let sel=ymd(new Date()), edit=false;
+
+function renderStrip(){
+  const box=$("strip"); box.textContent="";
+  const mon=monday(at(sel,"00:00")), today=ymd(new Date());
+  const l=document.createElement("button"); l.className="ar"; l.textContent="‹"; l.setAttribute("aria-label","Предыдущая неделя");
+  l.onclick=()=>go(ymd(addDays(at(sel,"00:00"),-7))); box.appendChild(l);
+  for(let i=0;i<6;i++){
+    const d=addDays(mon,i), k=ymd(d);
+    const c=document.createElement("div");
+    c.className="chip"+(k===sel?" sel":"")+(k===today?" today":"")+(pairsFor(d).list.length?" has":"");
+    c.textContent=SHORT[d.getDay()];
+    const b=document.createElement("b"); b.textContent=d.getDate(); c.appendChild(b);
+    c.onclick=()=>go(k); box.appendChild(c);
+  }
+  const r=document.createElement("button"); r.className="ar"; r.textContent="›"; r.setAttribute("aria-label","Следующая неделя");
+  r.onclick=()=>go(ymd(addDays(at(sel,"00:00"),7))); box.appendChild(r);
+}
+function go(k){sel=k;edit=false;render();}
+
+function renderList(now){
+  const d=at(sel,"00:00"), r=pairsFor(d), list=dayList(d), box=$("list");
+  $("dt").textContent=DAYN[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()]+" · "+(weekOf(d)===1?"числитель":"знаменатель")+(r.actual?"":" · по основному расписанию");
+  $("bto").hidden=sel===ymd(now);
+  $("be").textContent=edit?"Готово":"Изменить";
+  box.textContent="";
+  if(!list.length){const e=document.createElement("div"); e.className="empty"; e.textContent=d.getDay()===0?"Воскресенье — пар нет":"Пар нет"; box.appendChild(e);}
+  for(const p of list){
+    const e=new Date(p.s.getTime()+DUR*60000), idx=r.list.indexOf(r.list.find(x=>x.n===p.n&&x.subj===p.subj));
+    const el=document.createElement("div");
+    el.className="pair"+(now>=p.s&&now<e?" now":"")+(now>=e?" done":"")+(edit?" ed":"");
+    const t=document.createElement("div"); t.className="t"; t.textContent=p.start.replace(/^0/,"");
+    const sm=document.createElement("small"); sm.textContent=p.n+" пара"; t.appendChild(sm);
+    const i=document.createElement("div"); i.className="i";
+    const n=document.createElement("div"); n.className="n"; n.textContent=p.subj; i.appendChild(n);
+    if(p.teacher){const m=document.createElement("div"); m.className="m"; m.textContent=p.teacher; i.appendChild(m);}
+    el.appendChild(t); el.appendChild(i);
+    if(p.room){const rm=document.createElement("div"); rm.className="room"; rm.textContent=p.room; el.appendChild(rm);}
+    if(edit) el.onclick=()=>openEdit(idx);
+    box.appendChild(el);
+  }
+  if(edit){
+    const a=document.createElement("button"); a.className="add"; a.textContent="+ Добавить пару"; a.onclick=()=>openEdit(-1); box.appendChild(a);
+    if(store.ovr[sel]!==undefined){
+      const x=document.createElement("button"); x.className="add danger"; x.textContent="Сбросить день к исходному";
+      x.onclick=()=>{delete store.ovr[sel];save();render();}; box.appendChild(x);
+    }
+  }
+}
+
+function hero(now){
+  const flat=[]; for(let i=0;i<14;i++) flat.push(...dayList(addDays(now,i)));
+  const cur=flat.find(x=>now>=x.s&&now<new Date(x.s.getTime()+DUR*60000));
+  const next=flat.find(x=>x.s>now);
+  $("bar").hidden=!cur; $("nx").textContent="";
+  if(cur){
+    const end=new Date(cur.s.getTime()+DUR*60000);
+    $("lbl").textContent="Идёт пара, до конца";
+    $("big").textContent=dur(end-now);
+    $("bi").style.width=Math.min(100,(now-cur.s)/(DUR*60000)*100)+"%";
+    $("what").textContent=info(cur);
+    if(next) $("nx").textContent="Дальше: "+dayPrefix(next.s,now)+next.start.replace(/^0/,"")+" · "+next.subj;
+  } else if(next){
+    const brk=ymd(next.s)===ymd(now)&&flat.some(x=>x.s<now&&ymd(x.s)===ymd(now));
+    $("lbl").textContent=brk?"Перемена, до начала пары":"До начала следующей пары";
+    $("big").textContent=dur(next.s-now);
+    $("what").textContent=dayPrefix(next.s,now)+next.start.replace(/^0/,"")+" · "+info(next);
+  } else {
+    $("lbl").textContent="Ближайшие пары"; $("big").textContent="Нет пар";
+    $("what").textContent="В ближайшие две недели пар не найдено.";
+  }
+}
+
+function render(){tick.last=""; tick();}
+function tick(){
+  const now=new Date();
+  hero(now);
+  const key=ymd(now)+pad(now.getHours())+pad(now.getMinutes())+sel+edit;
+  if(tick.last!==key){tick.last=key; renderStrip(); renderList(now); fillLists();}
+}
+
+// ---- подсказки ----
+function fillLists(){
+  const teachers=new Set(); const all=[...Object.values(OVR),...Object.values(store.ovr)];
+  all.forEach(l=>l.forEach(p=>{if(p.teacher)teachers.add(p.teacher);}));
+  const f=(id,arr)=>{const el=$(id); el.textContent=""; arr.forEach(v=>{const o=document.createElement("option"); o.value=v; el.appendChild(o);});};
+  f("subs",SUBJECTS); f("tchs",[...teachers]);
+}
+function lastTeacher(subj){
+  const all=[...Object.values(OVR),...Object.values(store.ovr)]; let t="";
+  all.forEach(l=>l.forEach(p=>{if(p.subj===subj&&p.teacher)t=p.teacher;}));
+  return t;
+}
+
+// ---- редактирование пары ----
+let editIdx=-1;
+const fn=$("fn");
+for(let n=1;n<=7;n++){const o=document.createElement("option"); o.value=n; o.textContent=n+" пара · "+TIMES[n]; fn.appendChild(o);}
+function openEdit(idx){
+  editIdx=idx;
+  const p=idx>=0?pairsFor(at(sel,"00:00")).list[idx]:{n:1,subj:"",room:"",teacher:""};
+  $("mt").textContent=idx>=0?"Изменить пару":"Новая пара";
+  fn.value=p.n; $("fs").value=p.subj||""; $("fr").value=p.room||""; $("ft").value=p.teacher||"";
+  $("bd").hidden=idx<0; $("ov").hidden=false;
+}
+$("fs").addEventListener("change",()=>{if(!$("ft").value) $("ft").value=lastTeacher($("fs").value);});
+$("bc").onclick=()=>{$("ov").hidden=true;};
+$("bs").onclick=()=>{
+  const subj=$("fs").value.trim(); if(!subj){$("fs").focus();return;}
+  const list=pairsFor(at(sel,"00:00")).list.map(x=>({...x}));
+  const np={n:Number(fn.value),subj,room:$("fr").value.trim(),teacher:$("ft").value.trim()};
+  if(editIdx>=0) list[editIdx]=np; else list.push(np);
+  store.ovr[sel]=list; save(); $("ov").hidden=true; render();
+};
+$("bd").onclick=()=>{
+  const list=pairsFor(at(sel,"00:00")).list.map(x=>({...x}));
+  list.splice(editIdx,1); store.ovr[sel]=list; save(); $("ov").hidden=true; render();
+};
+$("be").onclick=()=>{edit=!edit;render();};
+$("bto").onclick=()=>go(ymd(new Date()));
+
+// ---- тема ----
+function applyTheme(){
+  if(store.theme) document.documentElement.setAttribute("data-theme",store.theme);
+  else document.documentElement.removeAttribute("data-theme");
+  $("bt").title="Тема: "+(store.theme==="light"?"светлая":store.theme==="dark"?"тёмная":"авто");
+}
+$("bt").onclick=()=>{store.theme=store.theme===""?"light":store.theme==="light"?"dark":""; save(); applyTheme();};
+applyTheme();
+
+// ---- резервная копия ----
+$("bb").onclick=()=>{$("ta").value=JSON.stringify(store.ovr); $("ov2").hidden=false;};
+$("bc2").onclick=()=>{$("ov2").hidden=true;};
+$("bi2").onclick=()=>{
+  try{const o=JSON.parse($("ta").value); if(!o||typeof o!=="object"||Array.isArray(o)) throw 0; store.ovr=o; save(); $("ov2").hidden=true; render();}
+  catch(e){$("ta").style.borderColor="var(--bad)";}
+};
+$("bx").onclick=()=>{store.ovr={}; save(); $("ov2").hidden=true; render();};
+
+// ---- режим виджета (#widget) ----
+function applyHash(){document.body.classList.toggle("w",location.hash==="#widget");}
+$("bw").onclick=()=>{location.hash="widget"; applyHash();};
+$("hero").onclick=()=>{if(document.body.classList.contains("w")){location.hash="main"; applyHash();}};
+addEventListener("hashchange",applyHash); applyHash();
+
+// при каждом входе в приложение открывается текущий день
+function goToday(){
+  if(!$("ov").hidden||!$("ov2").hidden) return;
+  sel=ymd(new Date()); edit=false; render(); window.scrollTo(0,0);
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden) goToday();});
+addEventListener("pageshow",goToday);
+
+// расписание из schedule.json (его обновляет бот на GitHub)
+fetch("schedule.json",{cache:"no-store"}).then(r=>r.ok?r.json():{}).then(j=>{
+  for(const k in j) OVR[k]=j[k]; render();
+}).catch(()=>{});
+
+tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>

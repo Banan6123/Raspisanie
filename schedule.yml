@@ -1,0 +1,32 @@
+name: schedule
+on:
+  schedule:
+    - cron: "0 4 * * *"    # 07:00 МСК - расписание на сегодня (время в UTC!)
+    - cron: "0 17 * * *"   # 20:00 МСК - расписание на завтра
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "today или tomorrow (пусто - по времени)"
+        required: false
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pdfplumber
+      - name: Парсинг и отправка
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python run.py ${{ github.event.inputs.mode }}
+      - name: Сохранить schedule.json
+        run: |
+          git config user.name "schedule-bot"
+          git config user.email "schedule-bot@users.noreply.github.com"
+          git add schedule.json
+          git diff --cached --quiet || (git commit -m "update schedule" && git push)
