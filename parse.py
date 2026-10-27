@@ -134,3 +134,11 @@ if __name__ == "__main__":
             print(repr(s), "->", parse_cell(s))
     else:
         main()
+
+
+
+
+    if os.getenv("FORCE_SEND"):
+        k = (today + dt.timedelta(days=1)).isoformat()
+        tg(fmt(k, days[k]) if k in days else "Расписания на завтра пока нет")
+        
