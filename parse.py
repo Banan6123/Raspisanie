@@ -87,10 +87,12 @@ def parse_pdf(data, group):
 def tg(text):
     tok, chat = os.getenv("TG_TOKEN"), os.getenv("TG_CHAT_ID")
     if not (tok and chat):
+        print("telegram: секреты TG_TOKEN / TG_CHAT_ID не заданы")
         return
     import requests
-    requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
-                  data={"chat_id": chat, "text": text}, timeout=20)
+    r = requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
+                      data={"chat_id": chat, "text": text}, timeout=20)
+    print("telegram:", r.status_code, r.text[:200])
 
 
 def fmt(day, lst):
@@ -116,6 +118,7 @@ def main():
         if r.status_code != 200 or not r.content.startswith(b"%PDF"):
             continue
         lst = parse_pdf(r.content, CFG["group"])
+        print("  найдено пар:", len(lst))
         k = d.isoformat()
         if lst and lst != days.get(k):
             days[k] = lst
