@@ -13,45 +13,59 @@ def norm(s):
     return re.sub(r"\s+", " ", s).strip()
 
 
-def canon_subject(t):
-    low = t.lower().strip(" .")
-    if low in CFG["aliases"]:
-        return CFG["aliases"][low]
-    for s in CFG["subjects"]:
-        if s.lower() == low:
-            return s
-    m = difflib.get_close_matches(t, CFG["subjects"], n=1, cutoff=0.75)
-    return m[0] if m else t
+def key(s):
+    return re.sub(r"[^а-яё0-9]", "", (s or "").lower())
 
 
-def canon_teacher(t):
-    sur = t.split()[0].lower()
-    for full in CFG["teachers"]:
-        if full.split()[0].lower().startswith(sur):
-            return full
-    return t
+def canon_subject(lines):
+    t = " ".join(lines).strip()
+    k = key(t)
+    if k in CFG["aliases"]:
+        return CFG["aliases"][k]
+    for p, name in CFG["prefixes"].items():
+        if k.startswith(p):
+            return name
+    m = difflib.get_close_matches(k, {key(x): x for x in CFG["subjects"]}, n=1, cutoff=0.8)
+    return {key(x): x for x in CFG["subjects"]}[m[0]] if m else t
+
+
+ROOM = re.compile(r"^(\d{3}[а-я]?|ДО|спортзал)$")
 
 
 def parse_cell(raw):
-    """'Физ-ра\\nЛунего\\nв АИ' -> {subj:'ФЗК', teacher:'Лунегов А. И.', room:'АИ'}"""
-    t = norm(" ".join((raw or "").split("\n")))  # перенос строки -> ПРОБЕЛ
-    if not t:
+    """Ячейка бывает с переносами посреди слов: 'Федене / ва ЮА' -> Феденева Ю. А."""
+    lines = [norm(l) for l in (raw or "").split("\n") if norm(l)]
+    if not lines:
         return None
-    room = teacher = ""
-    m = (re.search(r"\s(?:[вВ]\s+|ауд\.?\s*)(\S+)$", t)
-         or re.search(r"\s(\d{2,4}[а-яА-Я]?)$", t)
-         or re.search(r"\s([А-ЯЁ]{2,5})$", t))
+    ri = next((i for i, l in enumerate(lines) if ROOM.match(l)), None)
+    if ri is not None:
+        subj, room, tl = lines[:ri], lines[ri], lines[ri + 1:]
+    else:
+        subj, room, tl = lines[:1], "", lines[1:]
+    teacher = ""
+    if tl:
+        text = " ".join(tl)
+        m = re.search(r"(?:^|\s)([А-ЯЁ]{2})$", text)
+        ini = m.group(1) if m else ""
+        sur = (text[:m.start()] if m else text).replace(" ", "")
+        if ini and key(sur) in CFG.get("initials_are_room", []):
+            room = room or ini  # у таких преподавателей две буквы после фамилии это место
+        teacher = sur  # только фамилия, без инициалов
+    return {"subj": canon_subject(subj), "room": room, "teacher": teacher}
+
+
+ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5, "VI": 6, "VII": 7}
+
+
+def row_number(cell):
+    c = norm(cell)
+    m = re.match(r"^(VII|VI|IV|V|III|II|I)(?![A-Za-zА-Яа-я])", c)
     if m:
-        room, t = m.group(1), t[:m.start()]
-    m = re.search(r"\s([А-ЯЁ][а-яё-]+(?:\s[А-ЯЁ]\.\s?[А-ЯЁ]\.?)?)$", t)
-    if m and t[:m.start()].strip():
-        teacher, t = m.group(1), t[:m.start()]
-    return {"subj": canon_subject(t.strip()), "room": room,
-            "teacher": canon_teacher(teacher) if teacher else ""}
-
-
-def key(s):
-    return re.sub(r"[\s\u2010-\u2015\-]", "", s or "").lower()
+        return ROMAN[m.group(1)]
+    m = re.search(r"(\d{1,2})\s?[:.]?\s?(\d{2})", c)
+    if m and f"{int(m[1]):02d}:{m[2]}" in T2N:
+        return T2N[f"{int(m[1]):02d}:{m[2]}"]
+    return None
 
 
 def parse_pdf(data, group):
@@ -66,17 +80,11 @@ def parse_pdf(data, group):
                     continue
                 seen = True
                 hr, gc = loc
-                n = None
                 for row in tb[hr + 1:]:
-                    for c in row[:max(gc, 1)]:
-                        c = norm(c)
-                        mt = re.match(r"^(\d{1,2})[:.](\d{2})", c)
-                        if mt and f"{int(mt[1]):02d}:{mt[2]}" in T2N:
-                            n = T2N[f"{int(mt[1]):02d}:{mt[2]}"]; break
-                        mn = re.match(r"^([1-7])\b", c)
-                        if mn:
-                            n = int(mn[1]); break
-                    p = parse_cell(row[gc]) if gc < len(row) else None
+                    n = row_number(row[0]) if row else None
+                    cell = row[gc] if gc < len(row) else None
+                    print("  строка:", repr(row[0] if row else None), "->", n, "|", repr(cell))
+                    p = parse_cell(cell)
                     if p and n:
                         found[n] = {"n": n, **p}
     if not seen:
@@ -135,8 +143,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "test":
-        for s in ["Физ-ра\nЛунего\nв АИ", "Операционные системы\nи среды\nКудрина Е. З.\n309", "История\nАндронова А. В.\n420"]:
-            print(repr(s), "->", parse_cell(s))
-    else:
-        main()
+    main()
