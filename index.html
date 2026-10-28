@@ -144,6 +144,7 @@ try{const s=JSON.parse(localStorage.getItem(LS)); if(s&&typeof s==="object"){sto
 function save(){try{localStorage.setItem(LS,JSON.stringify(store));}catch(e){}}
 
 // ---- даты ----
+function nowMsk(){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Moscow",hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date());const g=t=>+p.find(x=>x.type===t).value;return new Date(g("year"),g("month")-1,g("day"),g("hour"),g("minute"),g("second"));}
 function pad(x){return String(x).padStart(2,"0");}
 function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
 function at(k,hm){const [h,m]=hm.split(":").map(Number);const [y,mo,d]=k.split("-").map(Number);return new Date(y,mo-1,d,h,m,0);}
@@ -184,11 +185,11 @@ function dayPrefix(s,now){
 }
 
 // ---- состояние экрана ----
-let sel=ymd(new Date()), edit=false;
+let sel=ymd(nowMsk()), edit=false;
 
 function renderStrip(){
   const box=$("strip"); box.textContent="";
-  const mon=monday(at(sel,"00:00")), today=ymd(new Date());
+  const mon=monday(at(sel,"00:00")), today=ymd(nowMsk());
   const l=document.createElement("button"); l.className="ar"; l.textContent="‹"; l.setAttribute("aria-label","Предыдущая неделя");
   l.onclick=()=>go(ymd(addDays(at(sel,"00:00"),-7))); box.appendChild(l);
   for(let i=0;i<6;i++){
@@ -259,7 +260,7 @@ function hero(now){
 
 function render(){tick.last=""; tick();}
 function tick(){
-  const now=new Date();
+  const now=nowMsk();
   hero(now);
   const key=ymd(now)+pad(now.getHours())+pad(now.getMinutes())+sel+edit;
   if(tick.last!==key){tick.last=key; renderStrip(); renderList(now); fillLists();}
@@ -303,7 +304,7 @@ $("bd").onclick=()=>{
   list.splice(editIdx,1); store.ovr[sel]=list; save(); $("ov").hidden=true; render();
 };
 $("be").onclick=()=>{edit=!edit;render();};
-$("bto").onclick=()=>go(ymd(new Date()));
+$("bto").onclick=()=>go(ymd(nowMsk()));
 
 // ---- тема ----
 function applyTheme(){
@@ -332,7 +333,7 @@ addEventListener("hashchange",applyHash); applyHash();
 // при каждом входе в приложение открывается текущий день
 function goToday(){
   if(!$("ov").hidden||!$("ov2").hidden) return;
-  sel=ymd(new Date()); edit=false; render(); window.scrollTo(0,0);
+  sel=ymd(nowMsk()); edit=false; render(); window.scrollTo(0,0);
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden) goToday();});
 addEventListener("pageshow",goToday);
